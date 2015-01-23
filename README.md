@@ -27,4 +27,4 @@ When the client receives a "LOCO" message with a valid loco address and valid da
 like "LOCO 211 50 1 1 0 0 0 0" (=Loco address 211, speed 50, forward, F0 on, other
 functions off), the program will start generating DCC packets and send them to SPROG
 via USB . </p>
-<p>Understands only "LOCO" and "POWER" commands so far.</p>
+<p>Understands only "LOCO" and "POWER" commands so far and only sends DCC packets with 128 speed steps and Functions F0 ... F4.</p>
