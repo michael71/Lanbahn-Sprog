@@ -44,15 +44,15 @@ exports.functions0to4 = function (addr, f0, f1, f2, f3, f4) {
     }
 }
 
-exports.functions5to9 = function (addr, f0, f1, f2, f3, f4) {
+exports.functions5to8 = function (addr, f5, f6, f7, f8) {
 
     var byte = new Array();
-    var arg1 = 0x80 |
-        (f0 ? 0x10 : 0) |
-        (f1 ? 0x01 : 0) |
-        (f2 ? 0x02 : 0) |
-        (f3 ? 0x04 : 0) |
-        (f4 ? 0x08 : 0);
+    var arg1 = 0xB0 |
+        (f5 ? 0x01 : 0) |
+        (f6 ? 0x02 : 0) |
+        (f7 ? 0x04 : 0) |
+        (f8 ? 0x08 : 0);
+    
     if ((addr >= 1) && (addr < 100)) {
         // short address form
         byte[0] = addr & 0xFF;
@@ -70,6 +70,33 @@ exports.functions5to9 = function (addr, f0, f1, f2, f3, f4) {
         return undefined;
     }
 }
+
+exports.functions9to12 = function (addr, f9, f10, f11, f12) {
+
+    var byte = new Array();
+    var arg1 = 0xA0 |
+        (f9 ? 0x01 : 0) |
+        (f10 ? 0x02 : 0) |
+        (f11 ? 0x04 : 0) |
+        (f12 ? 0x08 : 0);
+    if ((addr >= 1) && (addr < 100)) {
+        // short address form
+        byte[0] = addr & 0xFF;
+        byte[1] = arg1;
+        byte[2] = byte[0] ^ byte[1];
+        return (byteToHex(byte[0]) + " " + byteToHex(byte[1]) + " " + byteToHex(byte[2]));
+    } else if (addr <= 9999) {
+        // long address form
+        byte[0] = 192 + ((addr / 256) & 0x3F);
+        byte[1] = addr & 0xFF;
+        byte[2] = arg1;
+        byte[3] = byte[0] ^ byte[1] ^ byte[2];
+        return (byteToHex(byte[0]) + " " + byteToHex(byte[1]) + " " + byteToHex(byte[2]) + " " + byteToHex(byte[3]));
+    } else {
+        return undefined;
+    }
+}
+
 
 // ONLY for 128 speed steps
 exports.speed128 = function (addr, speed, direction) {
@@ -129,40 +156,3 @@ function speed28(speed) {
         }
     }
 }
-
-/*
- public static byte[] function0Through4Packet(int address, boolean longAddr,
-                        boolean f0, boolean f1, boolean f2, boolean f3, boolean f4 ) {
-        if (log.isDebugEnabled()) log.debug("f0 through f4 packet "+address);
-
-        if (!addressCheck(address, longAddr)) {
-            return null;  // failed!
-        }
-
-        // end sanity check, format output
-
-        byte[] retVal;
-        int arg1 = 0x80 |
-                    ( f0 ? 0x10 : 0) |
-                    ( f1 ? 0x01 : 0) |
-                    ( f2 ? 0x02 : 0) |
-                    ( f3 ? 0x04 : 0) |
-                    ( f4 ? 0x08 : 0);
-
-        if (longAddr) {
-            // long address form
-            retVal = new byte[4];
-            retVal[0] = (byte) (192+((address/256)&0x3F));
-            retVal[1] = (byte) (address&0xFF);
-            retVal[2] = (byte) arg1;
-            retVal[3] = (byte) (retVal[0]^retVal[1]^retVal[2]);
-        } else {
-            // short address form
-            retVal = new byte[3];
-            retVal[0] = (byte) (address&0xFF);
-            retVal[1] = (byte) arg1;
-            retVal[2] = (byte) (retVal[0]^retVal[1]);
-        }
-        return retVal;
-    }
-*/

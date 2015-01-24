@@ -106,15 +106,27 @@ client.on('message', function (message, remote) {
         sprogDevice.dccFunctions0to4(addr, fun);
         
         // second DCC function block (if contained in lanbahn string)
-        if (cmd.length > 9) {
-            for (i = 5; i < 10; i++) {
+        if (cmd.length >= 8) {
+            for (i = 5; i < 9; i++) {
                 var val = parseInt(cmd[i + 4]);
                 if (val === undefined) {
                     val = 0;
                 }
                 fun[i] = val;
             }; // store the data to send them later to sprog
-            sprogDevice.dccFunctions5to9(addr, fun);
+            sprogDevice.dccFunctions5to8(addr, fun);
+        }   
+        
+        // second DCC function block (if contained in lanbahn string)
+        if (cmd.length >= 12) {
+            for (i = 9; i < 13; i++) {
+                var val = parseInt(cmd[i + 4]);
+                if (val === undefined) {
+                    val = 0;
+                }
+                fun[i] = val;
+            }; // store the data to send them later to sprog
+            sprogDevice.dccFunctions9to12(addr, fun);
         }   
 
 
