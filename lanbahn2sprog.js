@@ -13,7 +13,7 @@
 
 // constants
 
-var DEBUG = true;
+var DEBUG = false;
 
 var LB_PORT = 27027; // lanbahn port
 var LB_GROUP = '239.200.201.250'; // lanbahn multicast group (=address)
@@ -58,7 +58,7 @@ client.on('listening', function () {
     dateshort = dateFormat(Date(), "yyyy-mm-dd h:MM:ss ");
     console.log(dateshort + ';lanbahn2spark.js started');
     console.log(dateshort + ';UDP Client listening on ' +
-        LB_GROUP + ":" + LB_PORT);
+                 LB_GROUP + ":" + LB_PORT);
     client.setBroadcast(true);
     client.addMembership(LB_GROUP);
 });
