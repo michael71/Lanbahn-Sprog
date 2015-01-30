@@ -10,7 +10,7 @@
 /*jslint bitwise: true */
 "use strict";
 
-var DEBUG = true;
+var DEBUG = false;
 var SIMULATION = false;
 
 var SPROG = "/dev/ttyACM0"; // sprog serial port
@@ -53,10 +53,14 @@ serialPort.on("open", function () {
 
     serialPort.on('data', function (data) {
         //result = data.trim();
-        console.log('serial received: ' + data); //result);
+        if (DEBUG) {
+            console.log('serial received: ' + data); //result);
+        }
         if (data.indexOf("S") > -1) {
             // Formula taken from JMRI
-            console.log('status message');
+            if (DEBUG) {
+                console.log('status message');
+            }
             var i = data.indexOf('h');
             if (i > -1) {
                 var current = (parseInt(data.substring(i + 7, i + 11), 16) * 488) / 47;
@@ -67,14 +71,18 @@ serialPort.on("open", function () {
     });
 
     setTimeout(function () {
-        console.log("waiting...");
+        if (DEBUG) {
+            console.log("waiting...");
+        }
         var command = '\r';
         serialPort.write(command, function (err, results) {
             status = WAITING;
             if (err !== undefined) {
                 console.log('err ' + err);
             }
-            console.log('results ' + results);
+            if (DEBUG) {
+                console.log('results ' + results);
+            }
         });
     }, 10);
 
@@ -115,7 +123,9 @@ function findNextSlot(slottype, lastCount) {
             return undefined; // not a single entry in dccS[] array
         }
     }
-    console.log("lastCount=" + lastCount + " found=" + count);
+    if (DEBUG) {
+        console.log("lastCount=" + lastCount + " found=" + count);
+    }
     return count;
 
 }
@@ -125,47 +135,63 @@ function findNextSlot(slottype, lastCount) {
 function timer() {
     var addr;
 
-    console.log(Date().substring(16, 24));
+    if (DEBUG) {
+        console.log(Date().substring(16, 24));
+    }
     if (status === WAITING) { //cannot send anything
-        console.log("waiting");
+        if (DEBUG) {
+            console.log("waiting");
+        }
         return;
     }
     statusCount++;
     if (immediateCmd !== undefined) {
         sendString(immediateCmd);
-        console.log("writing immediateCmd to sprog:" + immediateCmd);
+        if (DEBUG) {
+            console.log("writing immediateCmd to sprog:" + immediateCmd);
+        }
         immediateCmd = undefined; // reset, sent only once
     } else if ((statusCount % 10) === 0) {   // refresh functions less frequently
         addr = findNextSlot(func04,lastF04); // advance to next slot
         if (addr !== undefined) {
             lastF04 = addr;
-            console.log("DCC-F04-pkt for addr=" + addr + " toSPROG=" + func04[addr]);
+            if (DEBUG) {
+                console.log("DCC-F04-pkt for addr=" + addr + " toSPROG=" + func04[addr]);
+            }
             sendString(func04[addr]);
         }
      }  else if ((statusCount % 10) === 2) {   // refresh functions less frequently
         addr = findNextSlot(func58,lastF58); // advance to next slot
         if (addr !== undefined) {
             lastF58 = addr;
-            console.log("DCC-F58-pkt for addr=" + addr + " toSPROG=" + func58[addr]);
+            if (DEBUG) {
+                console.log("DCC-F58-pkt for addr=" + addr + " toSPROG=" + func58[addr]);
+            }
             sendString(func58[addr]);
         }
      } else if ((statusCount % 10) === 4) {   // refresh functions less frequently
         addr = findNextSlot(func912,lastF912); // advance to next slot
         if (addr !== undefined) {
             lastF912 = addr;
-            console.log("DCC-F912pkt for addr=" + addr + " toSPROG=" + func912[addr]);
+            if (DEBUG) {
+                console.log("DCC-F912pkt for addr=" + addr + " toSPROG=" + func912[addr]);
+            }
             sendString(func912[addr]);
         }
      } else if (statusCount > 200) { // request status from SPROG from time to time
         statusCount = 0;
         sendString("S");
-        console.log("requesting status");
+        if (DEBUG) {
+            console.log("requesting status");
+        }
         
     } else {
         addr = findNextSlot(dccS, lastLoco); // advance to next slot
         if (addr !== undefined) {
             lastLoco = addr;
-            console.log("DCC-Loc-pkt for addr=" + addr + " toSPROG=" + dccS[addr]);
+            if (DEBUG) {
+                console.log("DCC-Loc-pkt for addr=" + addr + " toSPROG=" + dccS[addr]);
+            }
             sendString(dccS[addr]);
         }
 
@@ -192,8 +218,10 @@ exports.dccFunctions9to12 = function (addr, fun) {
 exports.dccPower = function (power_on) {
     if (power_on == 1) {
         immediateCmd = "+";
+        console.log("POWER ON");
     } else {
         immediateCmd = "-";
+        console.log("POWER OFF);
     }
 }
 
