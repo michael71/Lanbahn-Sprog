@@ -9,10 +9,13 @@ Lanbahn-Sprog
 <h2>Installation:</h2>
 <pre>1) copy all files in a directory
 2) install nodejs 
-   (installation on raspberryPI:  
+      ( for example installation on raspberryPI:  
         wget http://node-arm.herokuapp.com/node_latest_armhf.deb
         sudo dpkg -i node_latest_armhf.deb   )
 3) install the node modules "dateformat" and "serialport"
+      ( for example installation on raspberryPI: 
+        sudo npm install -g dateformat
+        sudo npm install -g serialport  )
 4) change settings (sprog serial port) in sprogDevice.js
 5) start program with: <i>node lanbahn2sprog.js</i>
 </pre>
