@@ -221,7 +221,7 @@ exports.dccPower = function (power_on) {
         console.log("POWER ON");
     } else {
         immediateCmd = "-";
-        console.log("POWER OFF);
+        console.log("POWER OFF");
     }
 }
 
