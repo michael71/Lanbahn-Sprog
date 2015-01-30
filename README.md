@@ -14,8 +14,7 @@ Lanbahn-Sprog
         sudo dpkg -i node_latest_armhf.deb   )
 3) install the node modules "dateformat" and "serialport"
       ( for example installation on raspberryPI: 
-        sudo npm install -g dateformat
-        sudo npm install -g serialport  )
+        sudo npm install dateformat serialport  )
 4) change settings (sprog serial port) in sprogDevice.js
 5) start program with: <i>node lanbahn2sprog.js</i>
 </pre>
