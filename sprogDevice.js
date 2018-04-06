@@ -1,5 +1,10 @@
 // sprog_device.js
 
+// UPDATED on 06 April 2018 to work with newer (current) version of
+// "serialport" module (serialport@6.1.1)
+// see https://stackoverflow.com/questions/46023151/serialport-lib-parsers-readline-is-not-a-function-error-nodejs
+
+
 // handles sending of packages via SPROG II v3 or SPROG3
 // 
 // TODO: when no LOCO command for 10 secs, set speed to 0
@@ -15,7 +20,6 @@ var SIMULATION = false;
 
 var SPROG = "/dev/ttyACM0"; // sprog serial port
 var serialport = require("serialport");
-var SerialPort = serialport.SerialPort;
 
 var packet = require('./sprogDccPacket.js');
 
@@ -39,19 +43,19 @@ var WAITING = 1;
 var status = IDLE; // status of the serial port "handshake" between
 // this program and the SPROG
 
-var serialPort = new SerialPort(SPROG, {
-    baudrate: 9600,
+var myPort = new serialport(SPROG, {
+    baudRate: 9600,
     dataBits: 8,
     parity: 'none',
     stopBits: 1,
     flowControl: false,
-    parser: serialport.parsers.readline(">") // sprog terminates messages with CR (not LF !)
+    parser: new serialport.parsers.Readline(">") // sprog terminates messages with CR (not LF !) and '>' character
 });
 
-serialPort.on("open", function () {
+myPort.on("open", function () {
     console.log('open');
 
-    serialPort.on('data', function (data) {
+    myPort.on('data', function (data) {
         //result = data.trim();
         if (DEBUG) {
             console.log('serial received: ' + data); //result);
@@ -75,7 +79,7 @@ serialPort.on("open", function () {
             console.log("waiting...");
         }
         var command = '\r';
-        serialPort.write(command, function (err, results) {
+        myPort.write(command, function (err, results) {
             status = WAITING;
             if (err !== undefined) {
                 console.log('err ' + err);
@@ -86,14 +90,14 @@ serialPort.on("open", function () {
         });
     }, 10);
 
-    serialPort.on('error', function (err) {
+    myPort.on('error', function (err) {
         console.error("serial error", err);
     });
 });
 
 function sendString(s) {
     if (!SIMULATION) {
-        serialPort.write(s + "\r", function (err, results) {
+        myPort.write(s + "\r", function (err, results) {
             status = WAITING;
             if (err !== undefined) {
                 console.log('serial err ' + err);
