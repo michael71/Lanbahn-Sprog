@@ -13,7 +13,7 @@
 
 // constants
 
-var DEBUG = false;
+var DEBUG = true; //false;
 
 var LB_PORT = 27027; // lanbahn port
 var LB_GROUP = '239.200.201.250'; // lanbahn multicast group (=address)

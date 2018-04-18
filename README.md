@@ -33,3 +33,8 @@ like "LOCO 211 50 1 1 0 0 0 0" (=Loco address 211, speed 50, forward, F0 on, oth
 functions off), the program will start generating DCC packets and send them to SPROG
 via USB . </p>
 <p>Understands only "LOCO" and "POWER" commands so far and only sends DCC packets with 128 speed steps and Functions F0 ... F12.</p>
+
+<h2>Notes for pi-SPROG-one:</h2>
+<p>The baudrate has changed to 115200 (defined in sprogDevice.js)</p>
+<p>the serialport is now /dev/ttyS0</p>
+<p>if using the RaspberryPi 3, carefully read the notes in the manual (i.e. disable bluebooth)</p>

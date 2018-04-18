@@ -15,11 +15,18 @@
 /*jslint bitwise: true */
 "use strict";
 
-var DEBUG = false;
+var DEBUG = true;
+const DEBUG_SEND = true;
 var SIMULATION = false;
 
-var SPROG = "/dev/ttyACM0"; // sprog serial port
-var serialport = require("serialport");
+var SPROG = "/dev/ttyS0"; // sprog serial port
+const serialport = require("serialport");
+const parsers = serialport.parsers;
+
+// Use a `>` as a line terminator
+const parser = new parsers.Readline({
+  delimiter: '>'
+});
 
 var packet = require('./sprogDccPacket.js');
 
@@ -43,57 +50,43 @@ var WAITING = 1;
 var status = IDLE; // status of the serial port "handshake" between
 // this program and the SPROG
 
-var myPort = new serialport(SPROG, {
-    baudRate: 9600,
+const myPort = new serialport(SPROG, {
+    baudRate: 115200,    // high speed for Pi-SPROG !!
     dataBits: 8,
     parity: 'none',
     stopBits: 1,
     flowControl: false,
-    parser: new serialport.parsers.Readline(">") // sprog terminates messages with CR (not LF !) and '>' character
 });
 
-myPort.on("open", function () {
-    console.log('open');
+myPort.pipe(parser);
 
-    myPort.on('data', function (data) {
-        //result = data.trim();
+myPort.on('open', () => console.log('Port open'));
+
+parser.on('data', handledata); 
+
+myPort.on('error', (err) => console.error("serial error", err));
+
+function handledata (data) {
         if (DEBUG) {
-            console.log('serial received: ' + data); //result);
+            console.log('received: ' + data); 
         }
+  
+
         if (data.indexOf("S") > -1) {
-            // Formula taken from JMRI
-            if (DEBUG) {
-                console.log('status message');
-            }
+           // Formula taken from JMRI
+
             var i = data.indexOf('h');
             if (i > -1) {
-                var current = (parseInt(data.substring(i + 7, i + 11), 16) * 488) / 47;
-                console.log("I[mA] = " + Math.round(current));
+                var value = data.substring(i + 7, i + 11);
+                var current = parseInt(value,16) * 488 / 47;
+                console.log("I[mA] = " + Math.round(current) + '(' + value + ')');
             }
         }
         status = IDLE;
-    });
 
-    setTimeout(function () {
-        if (DEBUG) {
-            console.log("waiting...");
-        }
-        var command = '\r';
-        myPort.write(command, function (err, results) {
-            status = WAITING;
-            if (err !== undefined) {
-                console.log('err ' + err);
-            }
-            if (DEBUG) {
-                console.log('results ' + results);
-            }
-        });
-    }, 10);
+};
 
-    myPort.on('error', function (err) {
-        console.error("serial error", err);
-    });
-});
+
 
 function sendString(s) {
     if (!SIMULATION) {
@@ -105,6 +98,22 @@ function sendString(s) {
         });
     }
 }
+
+/*  setTimeout(function () {
+        if (DEBUG) {
+            console.log("waiting...");
+        }
+        var command = '\r';
+        myPort.write(command, function (err, results) {
+            status = WAITING;
+            if (err !== undefined) {
+                console.log('err ' + err);
+            }
+            //if (DEBUG) {
+            //    console.log('results ' + results);
+            //}
+        });
+    }, 50); */
 
 // search for next address with a DCC packet in it
 function findNextSlot(slottype, lastCount) {
@@ -127,9 +136,9 @@ function findNextSlot(slottype, lastCount) {
             return undefined; // not a single entry in dccS[] array
         }
     }
-    if (DEBUG) {
-        console.log("lastCount=" + lastCount + " found=" + count);
-    }
+    //if (DEBUG_SEND) {
+    //    console.log("lastCount=" + lastCount + " found=" + count);
+    //}
     return count;
 
 }
@@ -138,20 +147,22 @@ function findNextSlot(slottype, lastCount) {
 // output to SPROG
 function timer() {
     var addr;
-
-    if (DEBUG) {
-        console.log(Date().substring(16, 24));
+    
+    if (DEBUG_SEND) {
+        var d = new Date();
+        var ms = d.getTime();
+        console.log(statusCount + " - " + d.getUTCSeconds()+":"+d.getUTCMilliseconds());
     }
     if (status === WAITING) { //cannot send anything
-        if (DEBUG) {
-            console.log("waiting");
-        }
-        return;
+       if (DEBUG) {
+           console.log("waiting");
+       }
+       return;
     }
     statusCount++;
     if (immediateCmd !== undefined) {
         sendString(immediateCmd);
-        if (DEBUG) {
+        if (DEBUG_SEND) {
             console.log("writing immediateCmd to sprog:" + immediateCmd);
         }
         immediateCmd = undefined; // reset, sent only once
@@ -159,7 +170,7 @@ function timer() {
         addr = findNextSlot(func04,lastF04); // advance to next slot
         if (addr !== undefined) {
             lastF04 = addr;
-            if (DEBUG) {
+            if (DEBUG_SEND) {
                 console.log("DCC-F04-pkt for addr=" + addr + " toSPROG=" + func04[addr]);
             }
             sendString(func04[addr]);
@@ -168,7 +179,7 @@ function timer() {
         addr = findNextSlot(func58,lastF58); // advance to next slot
         if (addr !== undefined) {
             lastF58 = addr;
-            if (DEBUG) {
+            if (DEBUG_SEND) {
                 console.log("DCC-F58-pkt for addr=" + addr + " toSPROG=" + func58[addr]);
             }
             sendString(func58[addr]);
@@ -177,7 +188,7 @@ function timer() {
         addr = findNextSlot(func912,lastF912); // advance to next slot
         if (addr !== undefined) {
             lastF912 = addr;
-            if (DEBUG) {
+            if (DEBUG_SEND) {
                 console.log("DCC-F912pkt for addr=" + addr + " toSPROG=" + func912[addr]);
             }
             sendString(func912[addr]);
@@ -185,7 +196,7 @@ function timer() {
      } else if (statusCount > 200) { // request status from SPROG from time to time
         statusCount = 0;
         sendString("S");
-        if (DEBUG) {
+        if (DEBUG_SEND) {
             console.log("requesting status");
         }
         
@@ -193,7 +204,7 @@ function timer() {
         addr = findNextSlot(dccS, lastLoco); // advance to next slot
         if (addr !== undefined) {
             lastLoco = addr;
-            if (DEBUG) {
+            if (DEBUG_SEND) {
                 console.log("DCC-Loc-pkt for addr=" + addr + " toSPROG=" + dccS[addr]);
             }
             sendString(dccS[addr]);
@@ -233,6 +244,6 @@ exports.dccPower = function (power_on) {
 if (SIMULATION) {
     setInterval(timer, 1000); // to able to follow in terminal window
 } else {
-    setInterval(timer, 20); // with a timer setting of 5ms, every second 
+    setInterval(timer, 20); // with a timer setting of 10ms, every second 
     // call to the timer hits the "WAITING" state, therefor set to >=10ms
 }
